@@ -43,12 +43,12 @@ miner.addAddress('SNKu2aBBUBknhuLR4NgNoTUFs7vDS1mXS6');
 var workerPool = bcoin.workerpool.pool;
 workerPool.size = 1;
 
-console.log(bcoin.workerpool.pool.mine);
+miner.cpu.findNonceAsync = co(function* findNonceAsync(job) {
+  console.log("Trying to mine");
+  console.log(this)
 
-miner.cpu.__proto__.findNonceAsync = co(function* findNonceAsync(job) {
-  var data = job.getHeader();
   var target = job.attempt.target;
-  var interval = CPUMiner.INTERVAL;
+  var interval = bcoin.mining.CPUMiner.INTERVAL;
   var min = 0;
   var max = interval;
   var nonce;
@@ -69,7 +69,34 @@ miner.cpu.__proto__.findNonceAsync = co(function* findNonceAsync(job) {
   }
 
   return nonce;
-});
+}).bind(miner.cpu);
+
+
+// miner.cpu.__proto__.findNonceAsync = co(function* findNonceAsync(job) {
+//   var data = job.getHeader();
+//   var target = job.attempt.target;
+//   var interval = CPUMiner.INTERVAL;
+//   var min = 0;
+//   var max = interval;
+//   var nonce;
+//
+//   while (max <= 0xffffffff) {
+//     nonce = yield wss.broadcast({data: data, target: target, min: min, max: max});
+//
+//     if (nonce !== -1)
+//       break;
+//
+//     if (job.destroyed)
+//       return nonce;
+//
+//     this.sendStatus(job, max);
+//
+//     min += interval;
+//     max += interval;
+//   }
+//
+//   return nonce;
+// });
 
 
 
@@ -97,9 +124,14 @@ miner.cpu.__proto__.findNonceAsync = co(function* findNonceAsync(job) {
 //   });
 // })
 
-node.ensure()
-.then(() => node.open())
-.then(() => node.connect())
-.then(() => node.startSync());
-
-miner.open();
+// node.ensure()
+// .then(() => node.open())
+// .then(() => node.connect())
+// .then(() => node.startSync());
+//
+// miner.open()
+// .then(() => miner.createBlock())
+// .then((template) => {
+//   console.log(template);
+//   return miner.cpu.createJob();
+// }).then(job => job.mineAsync());
