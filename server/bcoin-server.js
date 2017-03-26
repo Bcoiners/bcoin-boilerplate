@@ -13,37 +13,48 @@ const Amount = bcoin.btc.Amount;
 const FullNode = bcoin.fullnode;
 const SPVNode = bcoin.spvnode;
 
+console.log(config.network);
 let node;
 if (process.env.npm_config_bcoin_node === 'spv') {
   node = new SPVNode(config);
 } else {
   node = new FullNode(config);
 }
-//
-// const walletdb = node.use(bcoin.walletplugin);
-// node.on('error', () => {
-//   ; // eslint-disable-line no-extra-semi
-// });
-//
-// node.pool.on('open', () => {
-//   console.log('pool opened'); // eslint-disable-line no-console
-// });
-//
-// if (node instanceof FullNode) {
-//   // eslint-disable-next-line no-unused-vars
-//   node.mempool.on('tx', (tx) => {
-//     // console.log('******** Saw tx: ', tx);
-//   });
-// }
-//
-// node.chain.on('block', () => {
-//   // console.log('new block found. Chain State tx: ', node.chain.tip);
-// });
-//
-// node.ensure()
-// .then(() => node.open())
-// .then(() => node.connect())
-// .then(() => node.startSync());
+
+const walletdb = node.use(bcoin.walletplugin);
+node.on('error', () => {});
+
+var chain = node.chain;
+var miner = node.miner;
+miner.addAddress('SNKu2aBBUBknhuLR4NgNoTUFs7vDS1mXS6');
+
+chain.on('block', () => {
+  console.log('new block found. Chain State tx: ', chain.tip);
+  console.log('Restarting miner');
+  miner.close();
+  miner.open().then(function() {
+    return miner.createBlock();
+  }).then(function(template) {
+    console.log("Block template: ");
+    console.log(template);
+
+    return miner.cpu.createJob();
+  }).then(function(job) {
+    return job.mineAsync();
+  }).then(function(block) {
+    // Add the block to the chain
+    console.log('Adding %s to the blockchain.', block.rhash);
+    console.log(block);
+    return chain.add(block);
+  }).then(function() {
+    console.log('Added block!');
+  });
+})
+
+node.ensure()
+.then(() => node.open())
+.then(() => node.connect())
+.then(() => node.startSync());
 //
 // node.http.post('/multisig/:id', co(function* postMultisig(req, res) {
 //   const passphrase = req.body.passphrase;
@@ -84,24 +95,22 @@ if (process.env.npm_config_bcoin_node === 'spv') {
 
 // Open the miner (initialize the databases, etc).
 // Miner will implicitly call `open` on chain and mempool
-var chain = node.chain;
-var miner = node.miner;
 
-miner.open().then(function() {
-  // Create a block "attempt".
-  return miner.createBlock();
-}).then(function(template) {
-  console.log("Block template: ");
-  console.log(template);
-  
-  return miner.cpu.createJob();
-}).then(function(job) {
-  return job.mineAsync();
-}).then(function(block) {
-  // Add the block to the chain
-  console.log('Adding %s to the blockchain.', block.rhash);
-  console.log(block);
-  return chain.add(block);
-}).then(function() {
-  console.log('Added block!');
-});
+// miner.open().then(function() {
+//   // Create a block "attempt".
+//   return miner.createBlock();
+// }).then(function(template) {
+//   console.log("Block template: ");
+//   console.log(template);
+//
+//   return miner.cpu.createJob();
+// }).then(function(job) {
+//   return job.mineAsync();
+// }).then(function(block) {
+//   // Add the block to the chain
+//   console.log('Adding %s to the blockchain.', block.rhash);
+//   console.log(block);
+//   return chain.add(block);
+// }).then(function() {
+//   console.log('Added block!');
+// });
