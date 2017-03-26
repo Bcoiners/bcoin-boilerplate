@@ -1,0 +1,6 @@
+.DS_Store
+.Trash
+node_modules/*
+/config.js
+build.js
+**/npm-debug.log
