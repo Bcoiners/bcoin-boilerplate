@@ -25,7 +25,9 @@
     ]
   },
   "browserify": {
-    "extension": [ "jsx" ],
+    "extension": [
+      "jsx"
+    ],
     "transform": [
       "partialify",
       "babelify"
@@ -44,7 +46,8 @@
     "level-js": "^2.2.4",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
-    "request": "^2.79.0"
+    "request": "^2.79.0",
+    "ws": "^2.2.2"
   },
   "devDependencies": {
     "babel-plugin-transform-runtime": "^6.23.0",

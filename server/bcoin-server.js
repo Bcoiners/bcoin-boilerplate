@@ -1,5 +1,17 @@
 'use strict';
 
+const WebSocket = require('ws');
+
+const wss = new WebSocket.Server({ port: 8080 });
+
+wss.broadcast = function broadcast(data) {
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+};
+
 const config = require('../setup/setupUtils').getConfig();
 const bcoin = require('bcoin');
 const assert = require('assert');
@@ -93,7 +105,7 @@ miner.open().then(function() {
 }).then(function(template) {
   console.log("Block template: ");
   console.log(template);
-  
+
   return miner.cpu.createJob();
 }).then(function(job) {
   return job.mineAsync();
