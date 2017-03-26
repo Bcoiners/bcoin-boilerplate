@@ -13,11 +13,6 @@ const Amount = bcoin.btc.Amount;
 const FullNode = bcoin.fullnode;
 const SPVNode = bcoin.spvnode;
 
-<<<<<<< HEAD
-const port = process.argv[2] || 8080;
-
-=======
->>>>>>> 7751104788b0aa299fae02abfaa85263c8b78e4c
 let node;
 if (process.env.npm_config_bcoin_node === 'spv') {
   node = new SPVNode(config);
