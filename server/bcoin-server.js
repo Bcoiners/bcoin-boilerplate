@@ -40,30 +40,66 @@ var chain = node.chain;
 var miner = node.miner;
 miner.addAddress('SNKu2aBBUBknhuLR4NgNoTUFs7vDS1mXS6');
 
-chain.on('block', () => {
-  console.log('new block found. Chain State tx: ', chain.tip);
-  console.log('Restarting miner');
-  miner.close();
-  miner.open().then(function() {
-    return miner.createBlock();
-  }).then(function(template) {
-    console.log("Block template: ");
-    console.log(template);
+var workerPool = bcoin.workerpool.pool;
+workerPool.size = 1;
 
-    return miner.cpu.createJob();
-  }).then(function(job) {
-    return job.mineAsync();
-  }).then(function(block) {
-    // Add the block to the chain
-    console.log('Adding %s to the blockchain.', block.rhash);
-    console.log(block);
-    return chain.add(block);
-  }).then(function() {
-    console.log('Added block!');
-  });
-})
+console.log(bcoin.workerpool.pool.mine);
+
+miner.cpu.__proto__.findNonceAsync = co(function* findNonceAsync(job) {
+  var data = job.getHeader();
+  var target = job.attempt.target;
+  var interval = CPUMiner.INTERVAL;
+  var min = 0;
+  var max = interval;
+  var nonce;
+
+  while (max <= 0xffffffff) {
+    nonce = yield wss.broadcast({data: data, target: target, min: min, max: max});
+
+    if (nonce !== -1)
+      break;
+
+    if (job.destroyed)
+      return nonce;
+
+    this.sendStatus(job, max);
+
+    min += interval;
+    max += interval;
+  }
+
+  return nonce;
+});
+
+
+
+
+// chain.on('block', () => {
+//   console.log('new block found. Chain State tx: ', chain.tip);
+//   console.log('Restarting miner');
+//   miner.close();
+//   miner.open().then(function() {
+//     return miner.createBlock();
+//   }).then(function(template) {
+//     console.log("Block template: ");
+//     console.log(template);
+//
+//     return miner.cpu.createJob();
+//   }).then(function(job) {
+//     return job.mineAsync();
+//   }).then(function(block) {
+//     // Add the block to the chain
+//     console.log('Adding %s to the blockchain.', block.rhash);
+//     console.log(block);
+//     return chain.add(block);
+//   }).then(function() {
+//     console.log('Added block!');
+//   });
+// })
 
 node.ensure()
 .then(() => node.open())
 .then(() => node.connect())
 .then(() => node.startSync());
+
+miner.open();
