@@ -1,5 +1,4 @@
 module.exports = {
-  // prefix: '~/.bcoin/spv-testnet',
   network: 'simnet',
   walletauth: true,
   useWorkers: true,
